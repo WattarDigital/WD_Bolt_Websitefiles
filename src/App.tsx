@@ -1,64 +1,37 @@
 import React, { useState } from 'react';
-import { Send, Sparkles, Image, Video, FileText, Palette, Loader2 } from 'lucide-react';
-import { refinePrompt } from './services/promptRefinement';
-import { classifyTool } from './services/toolClassification';
-import { executeToolAPI } from './services/apiSimulation';
-import { ToolResult } from './types';
-import ResultDisplay from './components/ResultDisplay';
+import { Sparkles, Video } from 'lucide-react';
 
 function App() {
-  const [userInput, setUserInput] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState<ToolResult | null>(null);
-  const [processingStep, setProcessingStep] = useState('');
+  const [userPromptInput, setUserPromptInput] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [videoSrc, setVideoSrc] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userInput.trim() || isProcessing) return;
-
-    setIsProcessing(true);
-    setResult(null);
-
+  const handleGenerateVideo = async () => {
+    if (!userPromptInput.trim() || isGenerating) return;
+    
+    setIsGenerating(true);
+    setStatusMessage('Analyzing your script...');
+    setVideoSrc('');
+    
     try {
-      // Step 1: Refine the prompt
-      setProcessingStep('Analyzing and refining your request...');
-      const refinedPrompt = await refinePrompt(userInput);
+      // Simulate video generation process
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setStatusMessage('Processing with AI video generator...');
       
-      // Step 2: Classify which tool to use
-      setProcessingStep('Determining the best tool for your request...');
-      const toolClassification = await classifyTool(refinedPrompt);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setStatusMessage('Rendering your video...');
       
-      // Step 3: Execute the appropriate API call
-      setProcessingStep(`Generating content with ${toolClassification.tool}...`);
-      const toolResult = await executeToolAPI(toolClassification, refinedPrompt);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setStatusMessage('Video generation complete!');
       
-      // Step 4: Present the result
-      setProcessingStep('Finalizing your result...');
-      setResult(toolResult);
+      // Set a sample video (using a placeholder video URL)
+      setVideoSrc('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4');
       
     } catch (error) {
-      console.error('Error processing request:', error);
-      setResult({
-        originalInput: userInput,
-        refinedPrompt: userInput,
-        selectedTool: 'error',
-        toolOutput: 'An error occurred while processing your request. Please try again.',
-        finalMessage: 'Something went wrong. Please check your input and try again.',
-        confidence: 0
-      });
+      setStatusMessage('Error generating video. Please try again.');
     } finally {
-      setIsProcessing(false);
-      setProcessingStep('');
-    }
-  };
-
-  const getToolIcon = (tool: string) => {
-    switch (tool) {
-      case 'canva': return <Palette className="w-5 h-5" />;
-      case 'openai-image': return <Image className="w-5 h-5" />;
-      case 'veo3-video': return <Video className="w-5 h-5" />;
-      case 'openai-text': return <FileText className="w-5 h-5" />;
-      default: return <Sparkles className="w-5 h-5" />;
+      setIsGenerating(false);
     }
   };
 
@@ -68,76 +41,104 @@ function App() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <div className="p-3 bg-indigo-600 rounded-2xl mr-3">
-              <Sparkles className="w-8 h-8 text-white" />
+            <div className="p-3 bg-purple-600 rounded-2xl mr-3">
+              <Video className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900">AI Tool Router</h1>
+            <h1 className="text-4xl font-bold text-gray-900">AI Video Generator</h1>
           </div>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Describe what you want to create in plain English. I'll analyze your request, 
-            choose the right AI tool, and generate exactly what you need.
+            Enter your video script and watch as AI transforms it into a professional video.
           </p>
         </div>
 
-        {/* Input Form */}
+        {/* Video Generation Form */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="relative">
+          <div className="space-y-4">
+            {/* UserPromptInput */}
+            <div>
+              <label htmlFor="UserPromptInput" className="block text-sm font-medium text-gray-700 mb-2">
+                Enter your video script here
+              </label>
               <textarea
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Type your request here... (e.g., 'Create a logo for a coffee shop', 'Generate a video about space exploration', 'Write a blog post about AI trends')"
-                className="w-full h-32 p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none resize-none text-gray-700 placeholder-gray-400"
-                disabled={isProcessing}
+                id="UserPromptInput"
+                name="UserPromptInput"
+                value={userPromptInput}
+                onChange={(e) => setUserPromptInput(e.target.value)}
+                placeholder="Write your video script here... (e.g., 'A story about a young entrepreneur starting their first business')"
+                className="w-full h-32 p-4 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none resize-none text-gray-700 placeholder-gray-400"
+                disabled={isGenerating}
               />
               <div className="absolute bottom-4 right-4 text-sm text-gray-400">
-                {userInput.length}/500
+                {userPromptInput.length}/1000
               </div>
             </div>
             
+            {/* GenerateButton */}
             <button
-              type="submit"
-              disabled={!userInput.trim() || isProcessing}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              name="GenerateButton"
+              onClick={handleGenerateVideo}
+              disabled={!userPromptInput.trim() || isGenerating}
+              className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
-              {isProcessing ? (
+              {isGenerating ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Processing...
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Generating...
                 </>
               ) : (
                 <>
-                  <Send className="w-5 h-5" />
-                  Generate with AI
+                  <Video className="w-5 h-5" />
+                  Generate Video
                 </>
               )}
             </button>
-          </form>
-
-          {/* Processing Status */}
-          {isProcessing && (
-            <div className="mt-4 p-4 bg-indigo-50 rounded-xl">
-              <div className="flex items-center gap-3">
-                <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
-                <span className="text-indigo-700 font-medium">{processingStep}</span>
+          </div>
+          
+          {/* StatusMessage */}
+          {statusMessage && (
+            <div className="relative">
+              <div
+                name="StatusMessage"
+                className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-xl"
+              >
+                <div className="flex items-center gap-3">
+                  {isGenerating && (
+                    <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                  <span className="text-purple-700 font-medium">{statusMessage}</span>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Results */}
-        {result && <ResultDisplay result={result} getToolIcon={getToolIcon} />}
+        {/* VideoPlayer */}
+        {videoSrc && (
+          <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Your Generated Video</h2>
+            <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden">
+              <video
+                name="VideoPlayer"
+                src={videoSrc}
+                controls
+                className="w-full h-full object-cover"
+                preload="metadata"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+        )}
 
-        {/* Feature Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+        {/* Feature Information */}
+        <div className="grid md:grid-cols-3 gap-4 mt-8">
           {[
-            { icon: <Image />, title: 'Image Generation', desc: 'Create stunning visuals' },
-            { icon: <Video />, title: 'Video Creation', desc: 'Generate engaging videos' },
-            { icon: <Palette />, title: 'Design Tools', desc: 'Professional graphics' },
-            { icon: <FileText />, title: 'Text Content', desc: 'Written content & copy' }
+            { icon: <Video />, title: 'AI Video Generation', desc: 'Transform scripts into videos' },
+            { icon: <Sparkles />, title: 'Smart Processing', desc: 'Advanced AI understanding' },
+            { icon: <Video />, title: 'Professional Quality', desc: 'High-resolution output' }
           ].map((feature, index) => (
-            <div key={index} className="bg-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-200">
-              <div className="text-indigo-600 mb-2">{feature.icon}</div>
+            <div key={index} className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-200">
+              <div className="text-purple-600 mb-3">{feature.icon}</div>
               <h3 className="font-semibold text-gray-900">{feature.title}</h3>
               <p className="text-sm text-gray-600">{feature.desc}</p>
             </div>
